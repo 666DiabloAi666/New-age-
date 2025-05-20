@@ -1,0 +1,125 @@
+// secure_social_backend/src/main.rs
+use actix_web::{web, App, HttpServer, HttpResponse, Responder, middleware};
+use actix_cors::Cors;
+use actix_web::http::header;
+use serde::{Deserialize, Serialize};
+use jsonwebtoken::{decode, DecodingKey, Validation};
+use validator::Validate;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Post {
+    id: i32,
+    username: String,
+    content: String,
+    timestamp: String,
+}
+
+#[derive(Debug, Deserialize, Validate)]
+struct RegisterInput {
+    #[validate(email)]
+    email: String,
+    #[validate(length(min = 6))]
+    password: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: String,
+    exp: usize,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Package {
+    id: u32,
+    name: String,
+    description: String,
+    price_usd: f64,
+}
+
+async fn get_posts() -> impl Responder {
+    HttpResponse::Ok().json(vec![
+        Post {
+            id: 1,
+            username: "vr_user".into(),
+            content: "Hello from the metaverse!".into(),
+            timestamp: "2025-05-20T12:00:00Z".into(),
+        }
+    ])
+}
+
+async fn register_user(info: web::Json<RegisterInput>) -> impl Responder {
+    if let Err(e) = info.validate() {
+        return HttpResponse::BadRequest().json(e);
+    }
+    HttpResponse::Ok().body("Valid input")
+}
+
+async fn get_packages() -> impl Responder {
+    let packages = vec![
+        Package {
+            id: 1,
+            name: "Basic Intelligence Plan".into(),
+            description: "Access to standard social features with limited holographic interactions.".into(),
+            price_usd: 9.99,
+        },
+        Package {
+            id: 2,
+            name: "Advanced Creator Suite".into(),
+            description: "Includes AI-powered recommendations, media enhancements, and AR content.".into(),
+            price_usd: 29.99,
+        },
+        Package {
+            id: 3,
+            name: "Enterprise Hologram Pack".into(),
+            description: "Full access to holographic rendering APIs, VR streams, and intelligent moderation AI.".into(),
+            price_usd: 99.99,
+        }
+    ];
+    HttpResponse::Ok().json(packages)
+}
+
+fn validate_token(token: &str) -> bool {
+    let secret = "secret_key";
+    decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::default()
+    ).is_ok()
+}
+
+// Macro to create JSON API routes quickly
+macro_rules! create_api {
+    ($app:expr, $path:expr, $handler:expr) => {
+        $app.route($path, web::get().to($handler))
+    };
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_method()
+            .allow_any_header()
+            .max_age(3600);
+
+        let app = App::new()
+            .wrap(middleware::Logger::default())
+            .wrap(
+                middleware::DefaultHeaders::new()
+                    .add((header::X_CONTENT_TYPE_OPTIONS, "nosniff"))
+                    .add((header::X_FRAME_OPTIONS, "DENY"))
+                    .add((header::CONTENT_SECURITY_POLICY, "default-src 'self'"))
+            )
+            .wrap(cors)
+            .route("/api/register", web::post().to(register_user));
+
+        let app = create_api!(app, "/api/posts", get_posts);
+        let app = create_api!(app, "/api/packages", get_packages);
+
+        app
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
+}
