@@ -1,0 +1,181 @@
+---
+
+Project Structure
+
+/socialnet
+├── rust-backend/          # Actix-web backend
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── routes/
+│   │   │   └── posts.rs
+│   │   ├── models/
+│   │   └── db.rs
+│   └── Cargo.toml
+│
+├── ml-service/            # Python FastAPI ML service
+│   ├── main.py
+│   ├── moderation.py
+│   └── requirements.txt
+│
+├── docker-compose.yml
+└── README.md
+
+
+---
+
+1. Rust Backend (rust-backend)
+
+Cargo.toml
+
+[package]
+name = "rust-backend"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = "4"
+actix-rt = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+
+main.rs
+
+use actix_web::{App, HttpServer};
+mod routes;
+mod db;
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    HttpServer::new(|| {
+        App::new()
+            .configure(routes::posts::init)
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
+}
+
+routes/posts.rs
+
+use actix_web::{post, web, HttpResponse, Responder};
+use serde::{Deserialize, Serialize};
+use crate::db;
+
+#[derive(Serialize, Deserialize)]
+struct PostData {
+    user_id: String,
+    content: String,
+}
+
+#[post("/post")]
+async fn create_post(data: web::Json<PostData>) -> impl Responder {
+    let response = db::moderate_content(&data.content).await;
+
+    if response.is_some() && response.unwrap().contains("toxic") {
+        return HttpResponse::BadRequest().body("Content flagged as toxic");
+    }
+
+    // Normally insert into DB here
+    HttpResponse::Ok().json(&data)
+}
+
+pub fn init(cfg: &mut web::ServiceConfig) {
+    cfg.service(create_post);
+}
+
+db.rs
+
+use reqwest::Client;
+
+pub async fn moderate_content(content: &str) -> Option<String> {
+    let client = Client::new();
+    let url = "http://ml-service:8000/moderate";
+
+    let resp = client.post(url)
+        .json(&serde_json::json!({ "text": content }))
+        .send()
+        .await
+        .ok()?
+        .text()
+        .await
+        .ok()?;
+
+    Some(resp)
+}
+
+
+---
+
+2. Python ML Service (ml-service)
+
+requirements.txt
+
+fastapi
+uvicorn
+scikit-learn
+joblib
+
+main.py
+
+from fastapi import FastAPI
+from moderation import is_toxic
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class Text(BaseModel):
+    text: str
+
+@app.post("/moderate")
+async def moderate_text(data: Text):
+    if is_toxic(data.text):
+        return "toxic"
+    return "clean"
+
+moderation.py
+
+def is_toxic(text: str) -> bool:
+    keywords = ["hate", "kill", "stupid"]
+    return any(kw in text.lower() for kw in keywords)
+
+
+---
+
+3. Docker Compose
+
+docker-compose.yml
+
+version: "3"
+services:
+  rust-backend:
+    build: ./rust-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - ml-service
+
+  ml-service:
+    build: ./ml-service
+    ports:
+      - "8000:8000"
+
+Add appropriate Dockerfiles in each directory.
+
+
+---
+
+Next Steps
+
+Add a real database (PostgreSQL + Diesel in Rust)
+
+Replace the dummy ML logic with a real model (sklearn, transformers, etc.)
+
+Add user authentication, comments, likes
+
+Create a React or mobile frontend
+
+
+
+---
