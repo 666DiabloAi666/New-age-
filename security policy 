@@ -1,0 +1,152 @@
+
+---
+
+Rust Security Policy Additions
+
+Key Security Features to Add:
+
+1. Rate Limiting – to mitigate abuse (e.g., spamming or brute force).
+
+
+2. CORS (Cross-Origin Resource Sharing) – to prevent unwanted cross-site requests.
+
+
+3. Input Validation & Sanitization – to prevent injection attacks.
+
+
+4. JWT Authentication – secure login sessions.
+
+
+5. HTTPS Enforcement – ensure encrypted communication.
+
+
+6. Content Security Policy (CSP) – via HTTP headers.
+
+
+7. Database Query Protection – using parameterized queries.
+
+
+
+
+---
+
+Sample Additions to Your Actix-Web Rust Code
+
+1. CORS Configuration
+
+Add actix-cors:
+
+# Cargo.toml
+actix-cors = "0.7"
+
+use actix_cors::Cors;
+use actix_web::{middleware, web, App, HttpServer, HttpResponse};
+
+HttpServer::new(|| {
+    let cors = Cors::default()
+        .allow_any_origin()
+        .allow_any_method()
+        .allow_any_header()
+        .max_age(3600);
+
+    App::new()
+        .wrap(middleware::Logger::default())
+        .wrap(cors)
+        .route("/api/posts", web::get().to(get_posts))
+})
+
+
+---
+
+2. JWT Authentication Middleware (Simplified)
+
+Add jsonwebtoken:
+
+jsonwebtoken = "9"
+
+use jsonwebtoken::{encode, decode, Header, Validation, EncodingKey, DecodingKey};
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: String,
+    exp: usize,
+}
+
+fn validate_token(token: &str) -> bool {
+    let secret = "secret_key";
+    decode::<Claims>(
+        token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &Validation::default()
+    ).is_ok()
+}
+
+Use validate_token in your endpoint guards.
+
+
+---
+
+3. Rate Limiting with actix-limitation
+
+Add actix-limitation crate or custom middleware for rate limiting.
+
+actix-limitation = "0.2"
+
+Example usage:
+
+use actix_limitation::{Limiter, MemoryStore};
+
+let store = MemoryStore::new();
+let limiter = Limiter::new(store).per_second(5);
+
+App::new()
+    .wrap(limiter)
+    .route("/api/posts", web::get().to(get_posts))
+
+
+---
+
+4. Set Security Headers (Content Security Policy)
+
+use actix_web::http::header;
+
+App::new()
+    .wrap(
+        middleware::DefaultHeaders::new()
+            .add((header::X_CONTENT_TYPE_OPTIONS, "nosniff"))
+            .add((header::X_FRAME_OPTIONS, "DENY"))
+            .add((header::CONTENT_SECURITY_POLICY, "default-src 'self'"))
+    )
+
+
+---
+
+5. Input Validation Example
+
+Use validator crate:
+
+validator = "0.16"
+
+use validator::Validate;
+
+#[derive(Debug, Deserialize, Validate)]
+struct RegisterInput {
+    #[validate(email)]
+    email: String,
+    
+    #[validate(length(min = 6))]
+    password: String,
+}
+
+Then validate on input:
+
+async fn register_user(info: web::Json<RegisterInput>) -> impl Responder {
+    if let Err(e) = info.validate() {
+        return HttpResponse::BadRequest().json(e);
+    }
+    HttpResponse::Ok().body("Valid input")
+}
+
+
+---
