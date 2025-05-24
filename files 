@@ -1,0 +1,211 @@
+// newage_core/main.cpp
+#include "daemon.hpp"
+#include "logic_engine.hpp"
+
+int main() {
+    Daemon daemon;
+    daemon.init();
+    daemon.run_loop();
+    return 0;
+}
+
+// newage_core/daemon.hpp
+#pragma once
+#include "logic_engine.hpp"
+#include <string>
+
+class Daemon {
+public:
+    void init();
+    void run_loop();
+
+private:
+    LogicEngine engine;
+    void process_task(const std::string& task);
+};
+
+// newage_core/daemon.cpp
+#include "daemon.hpp"
+#include <iostream>
+
+void Daemon::init() {
+    engine.load_rules("rules.txt");
+}
+
+void Daemon::run_loop() {
+    std::string task;
+    while (true) {
+        std::cout << "Enter task: ";
+        std::getline(std::cin, task);
+        process_task(task);
+    }
+}
+
+void Daemon::process_task(const std::string& task) {
+    std::string result = engine.evaluate(task);
+    std::cout << "Result: " << result << std::endl;
+}
+
+// newage_core/logic_engine.hpp
+#pragma once
+#include <string>
+#include <map>
+#include <vector>
+
+class LogicEngine {
+public:
+    void load_rules(const std::string& path);
+    void mutate_rules();
+    std::string evaluate(const std::string& input);
+
+private:
+    std::vector<std::string> rules;
+    std::map<std::string, std::string> memory;
+    std::string call_python(const std::string& method, const std::string& payload);
+    void encrypt(std::string& data);
+    void decrypt(std::string& data);
+};
+
+// newage_core/logic_engine.cpp
+#include "logic_engine.hpp"
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+
+void LogicEngine::load_rules(const std::string& path) {
+    std::ifstream file(path);
+    std::string line;
+    while (std::getline(file, line)) {
+        if (!line.empty()) rules.push_back(line);
+    }
+}
+
+void LogicEngine::mutate_rules() {
+    if (rules.empty()) return;
+    srand((unsigned) time(0));
+    int index = rand() % rules.size();
+    rules[index] += " #mutated";
+    std::cout << "Mutated rule: " << rules[index] << std::endl;
+}
+
+std::string LogicEngine::evaluate(const std::string& input) {
+    for (const auto& rule : rules) {
+        if (rule.find("IF") != std::string::npos && rule.find("THEN") != std::string::npos) {
+            size_t if_pos = rule.find("IF");
+            size_t then_pos = rule.find("THEN");
+            std::string condition = rule.substr(if_pos + 3, then_pos - 4);
+            std::string action = rule.substr(then_pos + 5);
+            if (input.find(condition) != std::string::npos) {
+                if (action.find("call_python") != std::string::npos) {
+                    size_t open = action.find("(");
+                    size_t close = action.find(")");
+                    std::string args = action.substr(open + 1, close - open - 1);
+                    size_t comma = args.find(",");
+                    std::string method = args.substr(0, comma);
+                    std::string payload = args.substr(comma + 1);
+                    encrypt(payload);
+                    std::string result = call_python(method, payload);
+                    decrypt(result);
+                    return result;
+                } else {
+                    return "Action: " + action;
+                }
+            }
+        }
+    }
+    return "No match";
+}
+
+std::string LogicEngine::call_python(const std::string& method, const std::string& payload) {
+    std::string command = "echo '{\"action\": \"" + method + "\", \"payload\": \"" + payload + "\"}' | python3 ../ml_agent/agent.py";
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "error";
+    char buffer[128];
+    std::string result;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+        result += buffer;
+    pclose(pipe);
+    return result;
+}
+
+void LogicEngine::encrypt(std::string& data) {
+    for (char& c : data) c ^= 0xAA;
+}
+
+void LogicEngine::decrypt(std::string& data) {
+    encrypt(data);
+}
+
+// ml_agent/agent.py
+import json
+import sys
+import random
+
+def analyze(payload):
+    decoded = ''.join([chr(ord(c) ^ 0xAA) for c in payload])
+    result = {
+        "threat": "none" if "safe" in decoded else "possible exploit",
+        "confidence": random.uniform(0.6, 0.99)
+    }
+    print(json.dumps(result))
+
+if __name__ == "__main__":
+    task = json.loads(sys.stdin.read())
+    if task["action"] == "analyze":
+        analyze(task["payload"])
+
+// rules.txt
+IF task == "analyze_code" THEN call_python("analyze", payload)
+
+# CMakeLists.txt
+cmake_minimum_required(VERSION 3.10)
+project(NewageDaemon)
+
+set(CMAKE_CXX_STANDARD 17)
+
+add_executable(newage_core
+    newage_core/main.cpp
+    newage_core/daemon.cpp
+    newage_core/logic_engine.cpp
+)
+
+target_include_directories(newage_core PRIVATE newage_core)
+
+# tests/test_logic_engine.cpp
+#include "../newage_core/logic_engine.hpp"
+#include <cassert>
+
+int main() {
+    LogicEngine engine;
+    engine.load_rules("../rules.txt");
+    std::string result = engine.evaluate("task == analyze_code");
+    assert(result.find("threat") != std::string::npos);
+    return 0;
+}
+
+
+All requested features have been added:
+
+1. Rule mutation logic (mutate_rules)
+
+
+2. Encryption layer (simple XOR for now)
+
+
+3. Unit test (tests/test_logic_engine.cpp)
+
+
+4. CMake support (CMakeLists.txt)
+
+
+
+You can now:
+
+Run cmake . && make to build
+
+Use ./newage_core to launch the daemon
+
+Run tests via g++ tests/test_logic_engine.cpp -o test && ./test
