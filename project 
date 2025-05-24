@@ -1,0 +1,154 @@
+---
+
+Phase 1: System Architecture Overview
+
+Core Components:
+
+1. C++ Daemon (newage_core)
+
+Manages tasks, communication, and plugin loading
+
+Embedded logic engine + optional Lua scripting
+
+
+
+2. Logic Engine (intelligence/logic_engine.hpp)
+
+Parses and applies rules (event-driven + heuristics)
+
+
+
+3. Python ML Agent (ml_agent/agent.py)
+
+Can analyze logs, behavior, and recommend actions
+
+
+
+4. Communication Bus (TCP or Unix Sockets)
+
+Interface between C++ core and Python agent
+
+
+
+
+
+---
+
+Phase 2: File/Module Scaffold
+
+/newage_core/main.cpp
+
+#include "daemon.hpp"
+#include "logic_engine.hpp"
+
+int main() {
+    Daemon daemon;
+    daemon.init();
+    daemon.run_loop();
+    return 0;
+}
+
+/newage_core/daemon.hpp
+
+#pragma once
+#include "logic_engine.hpp"
+#include <string>
+
+class Daemon {
+public:
+    void init();
+    void run_loop();
+
+private:
+    LogicEngine engine;
+    void process_task(const std::string& task);
+};
+
+/newage_core/logic_engine.hpp
+
+#pragma once
+#include <string>
+#include <map>
+#include <vector>
+
+class LogicEngine {
+public:
+    void load_rules(const std::string& path);
+    std::string evaluate(const std::string& input);
+
+private:
+    std::vector<std::string> rules;
+    std::map<std::string, std::string> memory;
+};
+
+
+---
+
+Phase 3: Rule Format (Simple DSL)
+
+Example (rules.txt):
+
+IF task == "analyze_code" THEN call_python("analyze", payload)
+IF memory > 90 THEN exec("free_cache")
+
+The logic engine will parse and apply these during evaluate(input).
+
+
+---
+
+Phase 4: Python Agent
+
+/ml_agent/agent.py
+
+import json
+import sys
+import random
+
+def analyze(payload):
+    # placeholder logic
+    result = {
+        "threat": "none" if "safe" in payload else "possible exploit",
+        "confidence": random.uniform(0.6, 0.99)
+    }
+    print(json.dumps(result))
+
+if __name__ == "__main__":
+    task = json.loads(sys.stdin.read())
+    if task["action"] == "analyze":
+        analyze(task["payload"])
+
+
+---
+
+Phase 5: C++ to Python Communication
+
+In logic_engine.cpp:
+
+#include <cstdlib>
+
+std::string LogicEngine::call_python(const std::string& method, const std::string& payload) {
+    std::string command = "echo '{\"action\": \"" + method + "\", \"payload\": \"" + payload + "\"}' | python3 ../ml_agent/agent.py";
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) return "error";
+    char buffer[128];
+    std::string result;
+    while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
+        result += buffer;
+    pclose(pipe);
+    return result;
+}
+
+
+---
+
+Phase 6: Optional Enhancements
+
+Self-replication: fork() with modified config
+
+Sandbox exec: Run subprocesses in a jailed dir
+
+Encryption layer: Add AES layer for socket messages
+
+Distributed logic sync: Fetch updated rules from IPFS or P2P swarm
+
+
