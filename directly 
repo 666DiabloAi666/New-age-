@@ -1,0 +1,88 @@
+1. Project Directory Layout
+
+Ensure your structure is like this:
+
+New-age/
+├── newage_core/
+│   ├── main.cpp
+│   ├── daemon.cpp / daemon.hpp
+│   ├── logic_engine.cpp / logic_engine.hpp
+├── ml_agent/
+│   └── agent.py
+├── rules.txt
+├── tests/
+│   └── test_logic_engine.cpp
+├── CMakeLists.txt
+└── Dockerfile
+
+
+---
+
+2. Dockerfile
+
+# Use a base image with C++ and Python
+FROM ubuntu:22.04
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy everything into container
+COPY . .
+
+# Build the C++ code
+RUN cmake . && make
+
+# Run unit tests (optional)
+RUN g++ tests/test_logic_engine.cpp -o test && ./test
+
+# Default command to start the daemon
+CMD ["./newage_core"]
+
+
+---
+
+3. .dockerignore (Optional)
+
+*.o
+*.log
+*.tmp
+build/
+
+
+---
+
+4. Build & Run
+
+# Build the Docker image
+docker build -t newage-daemon .
+
+# Run it interactively
+docker run -it newage-daemon
+
+
+---
+
+5. (Optional) Compose File
+
+If you want to expose sockets or communicate with external agents:
+
+# docker-compose.yml
+version: '3.8'
+services:
+  daemon:
+    build: .
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
+
+
+---
