@@ -1,0 +1,86 @@
+You're trying to write a Markdown-style changelog or feature summary directly in a bash shell or Python REPL, which isn't the right environment for that. Here's what's happening:
+
+❌ Why you're seeing errors:
+
+Bash and Python interpreters don’t recognize |, ---, Markdown tables, code blocks (```rust), or emojis as valid syntax.
+
+You're pasting Markdown or documentation intended for a README.md or release note directly into an interactive shell — which tries to execute each line as a command or code, and fails.
+
+
+
+---
+
+✅ What you should do instead:
+
+If you want to format this summary or table properly:
+
+1. Put it in a Markdown file, e.g.:
+
+nano CHANGELOG.md
+
+Paste the content there.
+
+2. Or echo it into a file:
+
+cat <<EOF > CHANGES.md
+## Changes Overview
+
+| Component                | Type         | Description |
+|-------------------------|--------------|-------------|
+| `src/judgement_core.rs` | 🔩 Rust Core | Implements celestial opcode resolver, time-inversion loop breaker, and eternal verdict emitter |
+| `ritual/invoke.py`      | 🧬 Python ML | Routes symbolic action codes to neural representations for oath integrity prediction |
+| `armor/verdict_link.rs` | 🔗 Rust Link | Binds Judgement Kernel with Celestial Armor activation protocols |
+| `tests/test_oath_layer.rs` | ✅ Test | Verifies truthfulness computation under variable entropy waves |
+| `oath/ledger.py`        | 📜 Python DB | Stores karmic balance sheets and oath registry logs with timestamped invocations |
+
+### Invocation Logic
+
+This merge includes the full implementation of the **SymbolicExecutable** trait:
+
+```rust
+pub trait SymbolicExecutable {
+    fn invoke(&self, token: SigilToken, intent: IntentVector) -> JudgementResult;
+    fn test_oath(&self, subject_id: Uuid) -> OathStatus;
+}
+
+Python-side neural link:
+
+def interpret_token_weight(token_image, oath_vector):
+    entropy = nero_kera_net.predict(token_image, oath_vector)
+    return "TRUE" if entropy < THRESHOLD else "FALSE"
+
+Sigil Token	Intent Vector	Result	Verdict Emission
+
+Σ-777	Honest Act	TRUE	🔥 Righteous
+Ψ-888	Deceit	FALSE	❌ Banished
+Ω-999	Repentance	TRUE	🌿 Forgiven
+
+
+Threat Matrix
+
+Threat Vector	Mitigation Status
+
+Temporal paradox injection	✅ Symbolic Lockstep Enforcement
+Oath replay attack	✅ Sigil Entropy Tokens
+Astral fork instability	✅ Dual-sigil detection + burn
+Neural misinterpretation	⛔ (Next Phase: Weight Rebalancer 1.1)
+
+
+Notes
+
+Requires judgement-core v1.4, nero-kera-net >= 2.0
+
+Docker image rebuilt with celestial sigil fonts and oath parser
+
+Encrypted oath registry now stores 1024-bit oath-hash trees
+
+
+🧙 Celestial Code Validators
+
+@Verdict macro decorator now infers intent vector gravity during compile time EOF
+
+
+---
+
+Let me know if you'd like this turned into a PDF, `README.md`, website page, or rendered HTML.
+
