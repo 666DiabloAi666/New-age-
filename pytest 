@@ -1,0 +1,41 @@
+
+---
+
+✅ Test the Base Symbolic AI Layer
+
+1. Install Requirements
+
+Update your requirements.txt:
+
+pytest
+
+Then run locally:
+
+pip install -r requirements.txt
+pytest tests/
+
+
+---
+
+2. GitHub Actions Confirmation
+
+Your CI pipeline will now pick up pytest and run it via tests/test_symbolic_ai.py. Confirm that the next GitHub Actions run completes without error.
+
+
+---
+
+3. Next Steps (After Testing Passes)
+
+Once you're satisfied with the symbolic AI base, we'll:
+
+✅ Add sigil combinatorics and mana fade logic
+
+✅ Integrate with KarmaChain, OWE CODE, or Verdict of the Burning Crown
+
+✅ Generate a proper CMakeLists.txt for Rust/Python builds
+
+✅ Add a Makefile for CLI orchestration (make test, make build, make deploy)
+
+
+
+---
