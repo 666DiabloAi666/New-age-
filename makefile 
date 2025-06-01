@@ -1,0 +1,118 @@
+
+---
+
+✅ Phase 1: Add CMakeLists.txt (Build Scaffold)
+
+We'll assume you're expanding to support Rust via symbolic_core/, and Python bindings (e.g. via PyO3 or FFI).
+
+📄 CMakeLists.txt (root)
+
+cmake_minimum_required(VERSION 3.20)
+project(NewAgeComplexAI)
+
+# Optional: enable Rust module if exists
+option(ENABLE_RUST "Enable Rust symbolic core" ON)
+
+# Python virtual env setup (for testing & bindings)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
+# Test layer
+enable_testing()
+
+# Add tests
+add_custom_target(
+    runtests
+    COMMAND ${Python3_EXECUTABLE} -m pytest tests/
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
+# Optional: Rust subdirectory
+if(ENABLE_RUST)
+    add_subdirectory(symbolic_core)
+endif()
+
+
+---
+
+✅ Phase 2: Optional Rust Submodule (symbolic_core/)
+
+If you'd like to expand later into Rust, create:
+
+📁 symbolic_core/Cargo.toml
+
+[package]
+name = "symbolic_core"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20", features = ["extension-module"] }
+
+📄 symbolic_core/src/lib.rs
+
+use pyo3::prelude::*;
+
+#[pyfunction]
+fn sigil_strength(sigil: &str) -> usize {
+    sigil.chars().map(|c| c as usize).sum::<usize>() % 1089
+}
+
+#[pymodule]
+fn symbolic_core(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(sigil_strength, m)?)?;
+    Ok(())
+}
+
+Then update your bindings in Python like so:
+
+# optional Rust binding
+from symbolic_core import sigil_strength
+
+
+---
+
+✅ Phase 3: Add a Makefile
+
+📄 Makefile
+
+.PHONY: test build run clean rust
+
+# Basic Python test
+test:
+	@echo "🧪 Running tests..."
+	pytest tests/
+
+# If Rust core exists
+rust:
+	cargo build --manifest-path=symbolic_core/Cargo.toml
+
+build:
+	cmake -S . -B build
+	cmake --build build
+
+run:
+	python main.py
+
+clean:
+	rm -rf build __pycache__ *.egg-info symbolic_core/target
+
+
+---
+
+✅ Final Structure
+
+New-age-/
+├── CMakeLists.txt
+├── Makefile
+├── main.py
+├── requirements.txt
+├── tests/
+│   └── test_symbolic_ai.py
+├── new_age/
+│   ├── ai_core.py
+│   └── symbolic_ai.py
+└
+
