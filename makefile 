@@ -114,5 +114,19 @@ New-age-/
 ├── new_age/
 │   ├── ai_core.py
 │   └── symbolic_ai.py
-└
+└── symbolic_core/ (optional, Rust)
+    ├── Cargo.toml
+    └── src/lib.rs
 
+
+---
+
+✅ Now You Can Run:
+
+make test       # Run Pytest layer
+make build      # CMake configure + build
+make run        # Launch ritual terminal
+make rust       # Compile Rust extension (optional)
+
+
+---
