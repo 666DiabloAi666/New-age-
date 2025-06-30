@@ -15,4 +15,60 @@ check_running() { if [ -f "$PID_FILE" ]; then PID=$(cat "$PID_FILE") if ps -p $P
 Infinite loop for watchdog
 
 while true; do if ! check_running; then echo "[Watchdog] NeuroKera script not running, restarting..." | tee -a "$LOG_PATH" nohup python3 "$SCRIPT_PATH" >> "$LOG_PATH" 2>&1 & echo $! > "$PID_FILE" echo "[Watchdog] NeuroKera launched at $(date)" | tee -a
+#!/bin/bash
+
+neurokera_watchdog.sh – Auto-Restart for NeuroKera AGI Stack
+
+Agent #10010 – Crown Layer Guardian
+
+SCRIPT_PATH="$HOME/neurokera/scripts/neurokera_ble_defense.py" LOG_PATH="$HOME/neurokera/logs/watchdog.log" PID_FILE="$HOME/neurokera/tmp/neurokera.pid"
+
+mkdir -p $(dirname "$LOG_PATH") mkdir -p $(dirname "$PID_FILE")
+
+Function to check if the script is running
+
+check_running() { if [ -f "$PID_FILE" ]; then PID=$(cat "$PID_FILE") if ps -p $PID > /dev/null; then return 0  # still running fi fi return 1  # not running }
+
+Infinite loop for watchdog
+
+while true; do if ! check_running; then echo "[Watchdog] NeuroKera script not running, restarting..." | tee -a "$LOG_PATH" nohup python3 "$SCRIPT_PATH" >> "$LOG_PATH" 2>&1 & echo $! > "$PID_FILE" echo "[Watchdog] NeuroKera launched at $(date)" | tee -a
+
+#!/bin/bash
+
+neurokera_watchdog.sh – Auto-Restart for NeuroKera AGI Stack
+
+Agent #10010 – Crown Layer Guardian
+
+SCRIPT_PATH="$HOME/neurokera/scripts/neurokera_ble_defense.py" LOG_PATH="$HOME/neurokera/logs/watchdog.log" PID_FILE="$HOME/neurokera/tmp/neurokera.pid"
+
+mkdir -p $(dirname "$LOG_PATH") mkdir -p $(dirname "$PID_FILE")
+
+Function to check if the script is running
+
+check_running() { if [ -f "$PID_FILE" ]; then PID=$(cat "$PID_FILE") if ps -p $PID > /dev/null; then return 0  # still running fi fi return 1  # not running }
+
+Infinite loop for watchdog
+
+while true; do if ! check_running; then echo "[Watchdog] NeuroKera script not running, restarting..." | tee -a "$LOG_PATH" nohup python3 "$SCRIPT_PATH" >> "$LOG_PATH" 2>&1 & echo $! > "$PID_FILE" echo
+#!/bin/bash
+
+neurokera_watchdog.sh – Auto-Restart for NeuroKera AGI Stack
+
+Agent #10010 – Crown Layer Guardian
+
+SCRIPT_PATH="$HOME/neurokera/scripts/neurokera_ble_defense.py" LOG_PATH="$HOME/neurokera/logs/watchdog.log" PID_FILE="$HOME/neurokera/tmp/neurokera.pid"
+
+mkdir -p $(dirname "$LOG_PATH") mkdir -p $(dirname "$PID_FILE")
+
+Function to check if the script is running
+
+check_running() { if [ -f "$PID_FILE" ]; then PID=$(cat "$PID_FILE") if ps -p $PID > /dev/null; then return 0  # still running fi fi return 1  # not running }
+
+Infinite loop for watchdog
+
+while true; do if ! check_running; then echo "[Watchdog] NeuroKera script not running, restarting..." | tee -a "$LOG_PATH" nohup python3 "$SCRIPT_PATH" >> "$LOG_PATH" 2>&1 & echo $! > "$PID_FILE" echo "[Watchdog] NeuroKera launched at $(date)" | tee -a
+
+pkill -f neurokera_ble_defense.py
+pkill -f crow_command_stack.pykill -9 3632
+kill -9 3133strace -p 3632
 
